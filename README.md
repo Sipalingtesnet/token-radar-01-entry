@@ -1,3 +1,7 @@
+[![Token launch radar](https://make.fun/badge/token-radar-01.svg)](https://make.fun/bounty/token-radar-01)
+[![Rank](https://make.fun/badge/token-radar-01/Sipalingtesnet/token-radar-01-entry/rank.svg)](https://make.fun/bounty/token-radar-01)
+[![Reward](https://make.fun/badge/token-radar-01/Sipalingtesnet/token-radar-01-entry/reward.svg)](https://make.fun/bounty/token-radar-01)
+
 # Token Radar-01 — Make.fun Competition Entry
 
 Token Radar-01 is a dark radar-terminal dashboard and valuation model that scans protocol TVL and live-token markets to rank pre-token protocols by implied value and generate concrete farm plans.
