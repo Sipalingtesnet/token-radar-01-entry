@@ -130,6 +130,17 @@ export function isPreToken(p: SnapshotProtocol): boolean {
   return p.gecko_id === null && p.symbol === null;
 }
 
+/** Board eligibility: the snapshot's own watchlist rule (input/README.md), applied to every ranked row. Excludes CEX / bridge / liquid-staking / wrapped / staked products and versioned names, using only the snapshot's category and name fields — never a list of slugs. Watchlist slugs already pass this rule. */
+export function isBoardEligible(p: SnapshotProtocol): boolean {
+  const excludedCategories = new Set(['Bridge', 'Canonical Bridge', 'Liquid Staking', 'Liquid Restaking', 'Restaked BTC', 'CEX']);
+  if (p.category !== null && excludedCategories.has(p.category)) return false;
+  const exchangeNames = ['Binance', 'Coinbase', 'Bybit', 'Kraken', 'Bitget', 'OKX', 'Bitfinex', 'Gemini', 'HTX', 'KuCoin', 'Bitstamp', 'Deribit'];
+  if (exchangeNames.some((n) => p.name.startsWith(n))) return false;
+  if (/\b(wrapped|staked|staking)\b/i.test(p.name)) return false;
+  if (/\s(V\d+(\.\d+)?|v\d+(\.\d+)?|\d+\.\d+)$/.test(p.name)) return false;
+  return true;
+}
+
 /** Compute implied value and working factors for a pre-token protocol. */
 export function computeImpliedValue(p: SnapshotProtocol, asOf: string, baseMultiple: number): { implied: number; growthPct: number; growthFactor: number; ageDaysVal: number | null; ageFactor: number; note: string } {
   const rawGrowth = typeof p.change_7d === 'number' && Number.isFinite(p.change_7d) ? p.change_7d : 0;
@@ -183,7 +194,7 @@ export function generateFarmSteps(p: SnapshotProtocol, age: number | null): stri
   const steps: string[] = [
     `1) Bridge $${capital} to ${primaryChain} via canonical bridge or reliable route (~$2-6 gas, 10-15 min setup).`,
     `2) ${categoryAction} (~$2-6 gas, 15 min execution).`,
-    `3) Maintain position and repeat weekly weekly check-ins for ${weeks} weeks (~$1 gas/week, 10 min/week).`,
+    `3) Maintain position and repeat weekly check-ins for ${weeks} weeks (~$1 gas/week, 10 min/week).`,
     chains.length > 1 
       ? `4) Execute secondary interaction on ${chains[1]} branch of ${name} with an extra $${Math.round(capital/2)} allocation (~$3 gas, 15 min).`
       : `4) Add a secondary LP or staking position on ${name} with 50% extra capital to boost multi-action score (~$3 gas, 15 min).`,
@@ -206,7 +217,7 @@ export function buildRadar(snapshot: Snapshot): { board: BoardRow[]; radar: Rada
     if (p) candidateMap.set(slug, p);
   }
   for (const p of snapshot.protocols) {
-    if (isPreToken(p) && p.tvl_usd >= 5_000_000 && !candidateMap.has(p.slug)) {
+    if (isPreToken(p) && isBoardEligible(p) && p.tvl_usd >= 5_000_000 && !candidateMap.has(p.slug)) {
       candidateMap.set(p.slug, p);
     }
   }
@@ -306,9 +317,10 @@ export function buildRadar(snapshot: Snapshot): { board: BoardRow[]; radar: Rada
     mcap_tvl_ratio: round4((p.mcap_usd!) / p.tvl_usd),
   }));
 
+  const fetchedAt = snapshot.source.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?/)?.[0] ?? snapshot.as_of;
   const radar: RadarData = {
     as_of: snapshot.as_of,
-    source: snapshot.source,
+    source: `DefiLlama protocols snapshot, fetched ${fetchedAt}`,
     floor_usd: snapshot.floor_usd,
     model_version: MODEL_VERSION,
     base_multiple: baseMultiple,
