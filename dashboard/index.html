@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOKEN RADAR - Token Launch Radar Terminal</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#board-section">Skip to radar board</a>
+
+<div class="terminal-shell">
+  <!-- Top Navigation & Status Strip -->
+  <header class="terminal-header">
+    <div class="brand">
+      <div class="status-pulse"></div>
+      <span class="brand-title">TOKEN-RADAR-01</span>
+      <span class="brand-sub">DEF_LAUNCH_RADAR</span>
+    </div>
+    <div class="top-meta">
+      <span>AS OF: <strong id="meta-as-of">2026-11-14</strong></span>
+      <span>WATCHLIST: <strong id="meta-watchlist">40</strong></span>
+      <span>BOARD ROWS: <strong id="meta-rows">0</strong></span>
+      <span>BASE MULT: <strong id="meta-mult">0.40x</strong></span>
+    </div>
+  </header>
+
+  <!-- Lede & Model Banner -->
+  <section class="lede-panel">
+    <div>
+      <h1>TOKEN LAUNCH RADAR</h1>
+      <p>Implied value = TVL x live-token multiple x growth x age — computed from the 2026-11-14 snapshot; a protocol records no token, it may still have one.</p>
+    </div>
+    <div class="formula-box">
+      <div class="formula-title">VALUATION FORMULA</div>
+      <code>Implied = TVL &times; BaseMult &times; GrowthFactor &times; AgeFactor</code>
+      <div class="formula-notes">Cap: $20B | Growth: 1 + clamp(7d%, -60, +150)/200 | Age: 0.85 + 0.30 * min(years, 4)/4</div>
+    </div>
+  </section>
+
+  <!-- Controls Strip -->
+  <section class="controls-panel">
+    <div class="field">
+      <label for="search-input">SEARCH PROTOCOL</label>
+      <input type="text" id="search-input" placeholder="Name or slug (e.g. etherfi, morpho)..." autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="category-select">CATEGORY</label>
+      <select id="category-select">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="chain-select">CHAIN</label>
+      <select id="chain-select">
+        <option value="">All Chains</option>
+      </select>
+    </div>
+    <div class="field checkbox-field">
+      <label>&nbsp;</label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="watchlist-checkbox"> Watchlist Only (Floor 50M+)
+      </label>
+    </div>
+    <div class="row-counter" id="row-counter">Showing 0 protocols</div>
+  </section>
+
+  <!-- Main Radar Board Table -->
+  <section id="board-section" class="panel-box">
+    <div class="table-container">
+      <table id="radar-table">
+        <thead>
+          <tr>
+            <th data-sort="rank" class="sortable">Rank <span class="sort-indicator">▾</span></th>
+            <th data-sort="name" class="sortable">Protocol <span class="sort-indicator"></span></th>
+            <th data-sort="category" class="sortable">Category <span class="sort-indicator"></span></th>
+            <th>Chains</th>
+            <th data-sort="tvl" class="sortable">TVL <span class="sort-indicator"></span></th>
+            <th data-sort="change" class="sortable">7d % <span class="sort-indicator"></span></th>
+            <th data-sort="age" class="sortable">Age <span class="sort-indicator"></span></th>
+            <th data-sort="implied" class="sortable">Implied Value <span class="sort-indicator"></span></th>
+          </tr>
+        </thead>
+        <tbody id="radar-tbody">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <p>No protocols match the current filter criteria.</p>
+    </div>
+  </section>
+
+  <!-- Live Token Comparables Section -->
+  <section class="comparables-section">
+    <div class="section-header">
+      <h2>Live-token comparables (tokens that already trade — NOT ranked here)</h2>
+      <span class="comparables-note" id="comparables-meta">Trimmed mean multiple used for model calibration.</span>
+    </div>
+    <div class="table-container">
+      <table id="live-table">
+        <thead>
+          <tr>
+            <th>Protocol</th>
+            <th>Category</th>
+            <th>Chains</th>
+            <th>TVL</th>
+            <th>Market Cap</th>
+            <th>Mcaps / TVL</th>
+            <th>7d %</th>
+          </tr>
+        </thead>
+        <tbody id="live-tbody">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Detail Slide-Over Panel -->
+  <aside id="detail-panel" class="detail-panel" aria-hidden="true">
+    <div class="detail-content">
+      <div class="detail-header">
+        <div>
+          <span class="detail-status" id="detail-status">PRE-TOKEN PROTOCOL</span>
+          <h2 id="detail-name">Protocol Name</h2>
+          <span class="detail-slug" id="detail-slug">slug</span>
+        </div>
+        <button id="detail-close" class="close-btn" aria-label="Close detail panel">&times; ESC</button>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-metric">
+          <span class="metric-label">TVL</span>
+          <span class="metric-value" id="detail-tvl">$0</span>
+        </div>
+        <div class="detail-metric">
+          <span class="metric-label">Implied Value</span>
+          <span class="metric-value highlight" id="detail-implied">$0</span>
+        </div>
+        <div class="detail-metric">
+          <span class="metric-label">7d Change</span>
+          <span class="metric-value" id="detail-change">0%</span>
+        </div>
+        <div class="detail-metric">
+          <span class="metric-label">Age</span>
+          <span class="metric-value" id="detail-age">0 days</span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Model Working Breakdown</h3>
+        <div class="formula-breakdown" id="detail-breakdown">
+          <!-- Populated in JS -->
+        </div>
+        <p class="disclaimer-text">Note: Implied value is this entry's own quantitative claim derived from TVL, growth momentum, and protocol maturity, not a prediction of token launch timing or exact exchange pricing.</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Generated Farm Plan (5-6 Action Steps)</h3>
+        <ol class="farm-steps-list" id="detail-steps">
+          <!-- Populated in JS -->
+        </ol>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Footer -->
+  <footer class="terminal-footer">
+    <div>Method note: Implied value = TVL &times; trimmed-mean multiple &times; growth factor &times; age factor (capped at $20B). All figures derived from snapshot as of 2026-11-14.</div>
+    <div>Built for make.fun token-radar-01 &bull; Dark Radar-Terminal Edition</div>
+  </footer>
+</div>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
